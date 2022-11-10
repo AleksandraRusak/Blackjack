@@ -7,166 +7,144 @@ import java.util.Scanner;
 
 public class Menu {
 
-    Scanner scanner = new Scanner(System.in);
-    Player player;    // <-- NULL
-    Dealer dealer;    // <-- NULL
-    List<Card> deckOfCards; // <-- NULL
-    List<Player> listOfPlayers = new ArrayList<>();
-
-
-
+    private static final int WINNING_TOTAL = 21;
+    private final Scanner scanner = new Scanner(System.in);
+    private final Player player;    // <-- NULL
+    private final Dealer dealer;    // <-- NULL
 
     // Constructor for the Menu class, creates our variables and starts the game
-    public Menu(Player player, Dealer dealer, List<Card> deckOfCards) {
+    public Menu(Player player, Dealer dealer) {
         this.player = player;                 // <-- player is no longer NULL
-        this.dealer = dealer;                 // <-- dealer is no longer NULL
-        this.deckOfCards = deckOfCards;       // <-- deckOfCards is no longer NULL
-
-
-        listOfPlayers.add(dealer);
-        listOfPlayers.add(player);
-
-    }
-
-
-    public void mainMenu() {
-
-        boolean isPlaying = true;
-
-        do {
-            System.out.println("""
-                    Welcome to BlackJack\s
-                     
-                    1 - Start game\s
-                    2 - What is your name? \s
-                    0 - Exit Game\s
-                    """);
-
-            switch (scanner.next()) {
-                case "1" -> menuStartGame();
-                case "2" -> setPlayersName();
-
-                case "0" -> isPlaying = false;
-
-                default -> System.out.println("Error");
-            }
-
-        } while (isPlaying);
-
+        this.dealer = dealer;
     }
 
     private void setPlayersName() {
-        System.out.println("Please enter your name");
+        System.out.println("""
+                What is your name? \s
+                """);
         String name = scanner.next();
         player.setName(name);
     }
 
-    public void menuStartGame() {
+    public void runInteractionWithUser() {
+        setPlayersName();
+        showMainMenu();
+    }
 
-        player.makeBet(); // make a bet
+    private void showMainMenu() {
+        boolean isPlaying = true;
+        do {
+            System.out.println("""
+                    1 - Start new game\s
+                    0 - Exit Game\s
+                    """);
+            switch (scanner.next()) {
+                case "1" -> runNewGame();
+                case "0" -> isPlaying = false;
+                default -> System.out.println("Enter a valid number option, please");
+            }
+        } while (isPlaying);
+        System.exit(0);
+    }
 
-        //TODO - shuffle
-        Collections.shuffle(deckOfCards);    // Shuffle the deck
+    void runNewGame() {
+        System.out.println( "Player's Wins: "+ player.getWins() + " vs. Losses: "+ player.getLosses());
+        System.out.println("--NEW GAME--");
+        if (player.getAccountBalance() > 0) {
+            player.setHand(new ArrayList<>());
+            dealer.setHand(new ArrayList<>());
+            if (player.makeBet()) {
+                List<Card> deckOfCards = new Deck().generateDeck();
+                Collections.shuffle(deckOfCards);   // Shuffle the deck
+                System.out.println("The deck has just gotten reshuffled.");
+                player.draw(deckOfCards);   // initial pair cards for player
+                player.draw(deckOfCards);
+                System.out.println("Initial hand of " + player.getName() + ": " + player.getHand());
+                dealer.draw(deckOfCards);    // initial pair of cards for dealer
+                dealer.draw(deckOfCards);
 
-        //If this isn't the first round, display the users score and put their cards back in the deck
-        /*if (wins > 0 || losses > 0 || pushes > 0) {
-            System.out.println();
-            System.out.println("Starting Next Round... Wins: " + wins + " Losses: " + losses + " Pushes: " + pushes);
-
+                if (isGameFinished(player, dealer)) {
+                    showMainMenu();
+                } else {
+                    makeRound(deckOfCards);
+                }
+            }
+            else {
+                runNewGame();
+            }
         }
-        */
+        else {
+            System.out.println(player.getName() + " has not enough money on the account.");
+        }
+    }
 
+    public boolean isGameFinished(Player player, Dealer dealer) {     // checking total sum of cards in players hand
+        int totalSumOfPlayer = Card.getCardsValue(player.getHand());
+        int totalSumOfDealer = Card.getCardsValue(dealer.getHand());
+        System.out.println(player.getName() + "'s total hand is " + Card.getCardsValue(player.getHand()) + "; " + dealer.getName() + "'s total is " + Card.getCardsValue(dealer.getHand()));
+        if ((dealer.getHand().size() > 2 && totalSumOfDealer > totalSumOfPlayer && totalSumOfDealer <= WINNING_TOTAL) ||
+                (totalSumOfDealer == WINNING_TOTAL && totalSumOfPlayer < WINNING_TOTAL)
+        ) {
+            System.out.println(player.getName() + " lost.");
+            player.setLosses(player.getLosses() + 1);
+            System.out.println(player.getAccountBalance() + " is a new balance of " + player.getName());
+            return true;
+        }
+        else
 
-        //TODO - receive 2 cards initially
+        if ((totalSumOfDealer == WINNING_TOTAL && totalSumOfPlayer == WINNING_TOTAL) || (totalSumOfDealer == totalSumOfPlayer && (dealer.getHand().size() + player.getHand().size() > 4))) {
+            System.out.println("The dealer and the player got the same. It's a draw!");
+            player.setAccountBalance(player.getAccountBalance() + player.getBet());
+            dealer.setAccountBalance(dealer.getAccountBalance() + dealer.getBet());
+            return true;
+        }
+        else
+        if (totalSumOfPlayer == WINNING_TOTAL || (totalSumOfPlayer < WINNING_TOTAL && totalSumOfDealer > WINNING_TOTAL)) {
+            System.out.println(player.getName() + " won the game.");
+            double dealerBet = player.getBet(); // initially it's assumed as the same as player's
+            if (player.getHand().size() == 2) {
+                // blackjack case happens when a player has initial two cards only
+                if (dealer.getHand().size() == 2 && Card.getCardsValue(dealer.getHand()) == WINNING_TOTAL) {// push happened
+                    player.setAccountBalance(player.getAccountBalance() + player.getBet());
+                } else {
+                    dealerBet = 1.5 * (player.getBet());     // if blackjack * 1.5
+                    player.setWins(player.getWins() + 1);
+                }
+            }
+            player.setWins(player.getWins() + 1);
+            player.setAccountBalance(player.getAccountBalance() + player.getBet() + dealerBet);
+            System.out.println(player.getAccountBalance() + " is current balance of " + player.getName());
+            return true;
+        } else if (totalSumOfPlayer > WINNING_TOTAL) {
+            System.out.println(player.getName() + " lost. " + player.getName() + " has gone over " + WINNING_TOTAL + " in the hand.");
+            player.setLosses(player.getLosses() + 1);
+            System.out.println(player.getAccountBalance() + " is a new balance of " + player.getName());
+            return true;
+        }
+        return false;
+    }
 
-
-        player.draw(deckOfCards);   // cards for player
-        player.draw(deckOfCards);
-
-        dealer.draw(deckOfCards);    // cards for dealer
-        dealer.draw(deckOfCards);
-
-
-
-        System.out.println("Would you like to hit (enter h) or stay (enter other symbol)?");
+    public void makeRound(List<Card> deckOfCards) {
+        System.out.println("Would you like to hit (enter h) or stand (enter other symbol)?");
         String userResponse = scanner.next();
         if (userResponse.equals("h")) {
-            System.out.println("Player hit.");
-            makeRound();
-
+            System.out.println(player.getName() + " hit.");
+            player.draw(deckOfCards);
         } else {
-            System.out.println("Player stands, dealer draws.");
-            dealer.draw(deckOfCards);
-        }
-
-
-        // TODO - do while loop
-
-
-
-        switch (scanner.next()) {
-            case "1" -> {
-
-                makeRound(); // draw card
-
-
-                //TODO - check AFTER receiving card if sum > 21
-                //TODO - IF 21  (blackjack)
-                //TODO - bonus (VG) check ACE value
-
+            System.out.println(player.getName() + " stands, " + dealer.getName() + " draws.");
+            int dealerCurrentTotal = Card.getCardsValue(dealer.getHand());
+            int playerCurrentTotal = Card.getCardsValue(player.getHand());
+            while (dealerCurrentTotal < playerCurrentTotal) {
+                dealer.draw(deckOfCards);
+                dealerCurrentTotal = Card.getCardsValue(dealer.getHand());
             }
-
-            case "2" -> System.out.println("Stay");
-            // TODO - dealer draws card
-            // TODO - check if win or lose
-
+            System.out.println("dealer hand (" + dealerCurrentTotal + ") is " + dealer.getHand());
         }
-
-    }
-
-    public void checkGameState(Player player) {     // checking total sum of cards in players hand
-        int totalSum = Card.getCardsValue(player.hand);
-
-        System.out.println(player.getName() + " state after draw: " + totalSum + " " + player.hand);
-
-        if (totalSum == 21) {
-            System.out.println(player.getName() + " won the game.");
-            player.setWins(player.getWins() + 1);
-            //makeRound();
-            //TODO - update account balance
-            double coefficient = 2.0;
-            if (player.hand.size() == 2){
-                coefficient = 1.5;     // if blackjack * 1.5
-            }
-            player.setAccountBalance(player.getAccountBalance() + Math.round(coefficient * player.getBet()));
-            System.out.println(player.getAccountBalance() + " is a new balance");
-        }
-        else if (totalSum > 21){
-            System.out.println(player.getName() + " lost. You have gone over 21.");
-            player.setLosses(player.getLosses() + 1);
-            //start the round over
-            //makeRound();
-        }
-    }
-
-    public void makeRound() {
-
-        //TODO - draw card
-        player.draw(deckOfCards);   // player draw cards
-        checkGameState(player);     // sum of cards player
-        System.out.println("Here is a new draw");
-        System.out.println(player.hand);
-
-        System.out.println("Would you like to hit (enter h) or stay (enter other symbol)?");
-        String userResponse = scanner.next();
-        if (userResponse.equals("h")) {     // player choose to hit
-            makeRound();                    // player gets a card
+        System.out.println(player.getName() + " has " + Card.getCardsValue(player.getHand()) + " points, the hand now is " + player.getHand());
+        if (isGameFinished(player, dealer)) {
+            showMainMenu();
         } else {
-            dealer.draw(deckOfCards);   // player choose to stay so dealer plays now
-            checkGameState(dealer);      // sum of cards dealer
-            makeRound();
+            makeRound(deckOfCards);
         }
-
     }
-
 }

@@ -10,12 +10,12 @@ public class Deck {
     public List<Card> generateDeck() {
 
         final String[] cardSymbols = {
-                " of Hearts (♥)",      " of Spades (♤)",
-                " of Diamonds (♢) ",   " of Clubs (♧)" };
+                " of Hearts (♥)", " of Spades (♤)",
+                " of Diamonds (♢) ", " of Clubs (♧)"};
 
         final String[] cardValues = {
                 "Ace", "2", "3", "4", "5", "6", "7", "8", "9", "10",
-                "Jack", "Queen", "King" };
+                "Jack", "Queen", "King"};
 
         for (String cardSymbol : cardSymbols) {
 
@@ -25,9 +25,7 @@ public class Deck {
                 card.setCardValue(cardValue);
                 deckList.add(card);
             }
-
         }
-
         return deckList;
     }
 }
