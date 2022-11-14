@@ -9,12 +9,12 @@ public class Player {
 
     private static final int MAX_BET = 500;    // max bet 500$
     private static final int MIN_BET = 2;      // min bet 2$
-    private double bet;        // Amount player bets on a game
+    private double bet;                        // Amount player bets on a game
     private List<Card> hand = new ArrayList<>();
     private double accountBalance = MAX_BET;    // players balance
     private int wins = 0, losses = 0;
 
-    private String name = "Player";         // if player doesn't set name, so we call player for "Player"
+    private String name;
 
     public String getName() {
         return name;
@@ -25,7 +25,7 @@ public class Player {
     }
 
     public boolean makeBet() {
-        System.out.println(getName() + " has " + getAccountBalance() + "$");
+        System.out.println(getName() + " has " + getAccountBalance() + "$");  // player has 500$ from the beginning
         System.out.println("Make your bet: ");
         Scanner scanner = new Scanner(System.in);
         try {

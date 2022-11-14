@@ -18,7 +18,7 @@ public class Menu {
         this.dealer = dealer;
     }
 
-    private void setPlayersName() {
+    private void setPlayersName() {      // write here not to repeat name when asking to play or exit
         System.out.println("""
                 What is your name? \s
                 """);
@@ -26,7 +26,7 @@ public class Menu {
         player.setName(name);
     }
 
-    public void runInteractionWithUser() {
+    public void runInteractionWithUser() {     // Starts Blackjack
         setPlayersName();
         showMainMenu();
     }
@@ -44,10 +44,11 @@ public class Menu {
                 default -> System.out.println("Enter a valid number option, please");
             }
         } while (isPlaying);
-        System.exit(0);
+        System.exit(0);    // exit with 0
     }
 
     void runNewGame() {
+
         System.out.println( "Player's Wins: "+ player.getWins() + " vs. Losses: "+ player.getLosses());
         System.out.println("--NEW GAME--");
         if (player.getAccountBalance() > 0) {
@@ -55,12 +56,12 @@ public class Menu {
             dealer.setHand(new ArrayList<>());
             if (player.makeBet()) {
                 List<Card> deckOfCards = new Deck().generateDeck();
-                Collections.shuffle(deckOfCards);   // Shuffle the deck
-                System.out.println("The deck has just gotten reshuffled.");
-                player.draw(deckOfCards);   // initial pair cards for player
+                Collections.shuffle(deckOfCards);               // Shuffle the deck
+                System.out.println("The deck has just gotten reshuffled.");      // shuffling the deck every time before new game
+                player.draw(deckOfCards);                       // initial pair cards for player
                 player.draw(deckOfCards);
                 System.out.println("Initial hand of " + player.getName() + ": " + player.getHand());
-                dealer.draw(deckOfCards);    // initial pair of cards for dealer
+                dealer.draw(deckOfCards);                       // initial pair of cards for dealer
                 dealer.draw(deckOfCards);
 
                 if (isGameFinished(player, dealer)) {
@@ -78,12 +79,12 @@ public class Menu {
         }
     }
 
-    public boolean isGameFinished(Player player, Dealer dealer) {     // checking total sum of cards in players hand
+    public boolean isGameFinished(Player player, Dealer dealer) {     // checking total sum of cards in participants hands
         int totalSumOfPlayer = Card.getCardsValue(player.getHand());
         int totalSumOfDealer = Card.getCardsValue(dealer.getHand());
         System.out.println(player.getName() + "'s total hand is " + Card.getCardsValue(player.getHand()) + "; " + dealer.getName() + "'s total is " + Card.getCardsValue(dealer.getHand()));
         if ((dealer.getHand().size() > 2 && totalSumOfDealer > totalSumOfPlayer && totalSumOfDealer <= WINNING_TOTAL) ||
-                (totalSumOfDealer == WINNING_TOTAL && totalSumOfPlayer < WINNING_TOTAL)
+                (totalSumOfDealer == WINNING_TOTAL && totalSumOfPlayer < WINNING_TOTAL)      // WINNING_TOTAL it's 21
         ) {
             System.out.println(player.getName() + " lost.");
             player.setLosses(player.getLosses() + 1);
@@ -93,18 +94,19 @@ public class Menu {
         else
 
         if ((totalSumOfDealer == WINNING_TOTAL && totalSumOfPlayer == WINNING_TOTAL) || (totalSumOfDealer == totalSumOfPlayer && (dealer.getHand().size() + player.getHand().size() > 4))) {
-            System.out.println("The dealer and the player got the same. It's a draw!");
+            System.out.println("The dealer and the player got the same. It's a draw!");   //  båda oavgjort
             player.setAccountBalance(player.getAccountBalance() + player.getBet());
             dealer.setAccountBalance(dealer.getAccountBalance() + dealer.getBet());
             return true;
         }
         else
-        if (totalSumOfPlayer == WINNING_TOTAL || (totalSumOfPlayer < WINNING_TOTAL && totalSumOfDealer > WINNING_TOTAL)) {
+            // if won or lost calculated total wins and looses and account go + or - it depends on bet
+        if (totalSumOfPlayer == WINNING_TOTAL || (totalSumOfPlayer < WINNING_TOTAL && totalSumOfDealer > WINNING_TOTAL)) {  // WINNING_TOTAL it's 21
             System.out.println(player.getName() + " won the game.");
-            double dealerBet = player.getBet(); // initially it's assumed as the same as player's
+            double dealerBet = player.getBet();       // initially it's assumed as the same as player's
             if (player.getHand().size() == 2) {
                 // blackjack case happens when a player has initial two cards only
-                if (dealer.getHand().size() == 2 && Card.getCardsValue(dealer.getHand()) == WINNING_TOTAL) {// push happened
+                if (dealer.getHand().size() == 2 && Card.getCardsValue(dealer.getHand()) == WINNING_TOTAL) {     // push happened
                     player.setAccountBalance(player.getAccountBalance() + player.getBet());
                 } else {
                     dealerBet = 1.5 * (player.getBet());     // if blackjack * 1.5
@@ -115,7 +117,7 @@ public class Menu {
             player.setAccountBalance(player.getAccountBalance() + player.getBet() + dealerBet);
             System.out.println(player.getAccountBalance() + " is current balance of " + player.getName());
             return true;
-        } else if (totalSumOfPlayer > WINNING_TOTAL) {
+        } else if (totalSumOfPlayer > WINNING_TOTAL) {   // total players cars in a hand > WINNING_TOTAL = 21
             System.out.println(player.getName() + " lost. " + player.getName() + " has gone over " + WINNING_TOTAL + " in the hand.");
             player.setLosses(player.getLosses() + 1);
             System.out.println(player.getAccountBalance() + " is a new balance of " + player.getName());
@@ -125,11 +127,14 @@ public class Menu {
     }
 
     public void makeRound(List<Card> deckOfCards) {
-        System.out.println("Would you like to hit (enter h) or stand (enter other symbol)?");
+        System.out.println("Would you like to hit (enter h) or stand (enter other symbol) or exit (enter exit) the game?");
         String userResponse = scanner.next();
         if (userResponse.equals("h")) {
             System.out.println(player.getName() + " hit.");
             player.draw(deckOfCards);
+        } else if (userResponse.equals("exit")){
+            System.out.println(player.getName() + " exit the game. Good bye");
+            System.exit(0);
         } else {
             System.out.println(player.getName() + " stands, " + dealer.getName() + " draws.");
             int dealerCurrentTotal = Card.getCardsValue(dealer.getHand());
@@ -138,7 +143,7 @@ public class Menu {
                 dealer.draw(deckOfCards);
                 dealerCurrentTotal = Card.getCardsValue(dealer.getHand());
             }
-            System.out.println("dealer hand (" + dealerCurrentTotal + ") is " + dealer.getHand());
+            System.out.println("Dealer hand (" + dealerCurrentTotal + ") is " + dealer.getHand());
         }
         System.out.println(player.getName() + " has " + Card.getCardsValue(player.getHand()) + " points, the hand now is " + player.getHand());
         if (isGameFinished(player, dealer)) {
